@@ -13,7 +13,7 @@ class Student(models.Model):
     date_of_birth = models.DateField(null=True, blank=True, verbose_name='Fecha de Nacimiento')
     address = models.CharField(max_length=200, null=True, blank=True, verbose_name='Dirección')
     code = models.CharField(max_length=7, null=False, blank=False, unique=True, default=generate_random_code, verbose_name='Código')
-    grade = models.CharField(max_length=3, null=True, blank=True, choices=grade_choices, default=grade_choices[0][0], verbose_name='Grado')
+    grade = models.CharField(max_length=3, null=False, blank=False, choices=grade_choices, default=grade_choices[0][0], verbose_name='Grado')
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Creación')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Fecha de Actualización')
