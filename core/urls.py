@@ -19,10 +19,11 @@ from django.urls import path, include
 
 from django.conf import settings
 from django.conf.urls.static import static
-
+from core.views import redirect_to_login
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', redirect_to_login),
     path('qualification/', include('qualification.urls')),
 ]
 if settings.DEBUG:
