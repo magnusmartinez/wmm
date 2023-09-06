@@ -1,0 +1,399 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes</title>
+  <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}">
+
+  <!-- Google Font: Source Sans Pro -->
+  <!-- <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet"> -->
+
+  <link rel="stylesheet" href="{% static 'plugins/tabulator/css/tabulator.css' %}">
+  <link rel="stylesheet" href="{% static 'plugins/tabulator/css/tabulator_bootstrap5.min.css' %}">
+  <link rel="stylesheet" href="{% static 'plugins/datepicker/css/datepicker.css' %}">
+  <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.css' %}">
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="{% static 'plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css' %}">
+
+  <style>
+    .transparent {
+      color: transparent !important;
+    }
+    .tree-icon {
+      margin-right: 5px;
+      font-size: 1.5rem;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card mt-3">
+          <div class="card-header">
+
+            <div class="container-fluid">
+              <div class="row">
+                <div class="col-6">
+                  <input type="radio" checked id="reporttype-m" name="reporttype" data-value="m">
+                  <label for="mensual">Reportes por mes</label>
+                </div>
+                <div class="col-6">
+                  <input type="radio" id="reporttype-p" name="reporttype" data-value="p">
+                  <label for="periodo">Reportes por periodo</label>
+                </div>
+              </div>
+
+              <div class="row mt-3">
+                <div class="col-4">
+                  <input type="text" class="month form-control form-control-lg" placeholder="Selecione una mes y un año">
+
+                  <input type="text" class="year form-control form-control-lg d-none"  placeholder="Selecione una año">
+                </div>
+                <div class="col-4">
+                  <!-- <label for="grade">Selecciona un grado</label> -->
+                  <select id="grade" name="grade" class="form-control form-control-lg">
+                    <option value="">Selecciona un grado</option>
+                    <!-- <option value="N/A">No agignado</option> -->
+                    <option value="S1A">Primero A</option>
+                    <option value="S1B">Primero B</option>
+                    <option value="S1C">Primero C</option>
+                    <option value="S2A">Segundo A</option>
+                    <option value="S2B">Segundo B</option>
+                    <option value="S2C">Segundo C</option>
+                    <option value="S3A">Tercero A</option>
+                    <option value="S3B">Tercero B</option>
+                    <option value="S3C">Tercero C</option>
+                    <option value="S4A">Cuarto A</option>
+                    <option value="S4B">Cuarto B</option>
+                    <option value="S4C">Cuarto C</option>
+                    <option value="S5A">Quinto A</option>
+                    <option value="S5B">Quinto B</option>
+                    <option value="S5C">Quinto C</option>
+                    <option value="S6A">Sexto A</option>
+                    <option value="S6B">Sexto B</option>
+                    <option value="S6C">Sexto C</option>
+                  </select>
+                </div>
+                <div class="col-4">
+                  <div class="row">
+                    <div class="col-6">
+                      <button class="btn btn-success form-control form-control-lg" id="genReport">Generar
+                        reporte</button>
+                    </div>
+                    <div class="col-6">
+                      <button class="btn btn-default form-control form-control-lg" disabled id="printReport">Imprimir
+                        reporte</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div class="card-body">
+
+
+            <div class="container-fluid">
+              <div class="row">
+                <div class="col-12">
+                  <h2 id="report-title"></h2>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <div id="table-reports"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'plugins/tabulator/js/tabulator.js' %}"></script>
+  <script src="{% static 'plugins/datepicker/js/datepicker.js' %}"></script>
+  <!-- SweetAlert2 -->
+  <script src="{% static 'plugins/sweetalert2/sweetalert2.min.js' %}"></script>
+
+  <script>
+
+    $(document).ready(async function () {
+      function dateToHuman(dateStr) {
+        const months = [
+          "enero", "febrero", "marzo", "abril", "mayo", "junio",
+          "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+        ];
+
+        const parts = dateStr.split("/");
+        const monthNumber = parseInt(parts[0], 10);
+        const year = parts[1];
+
+        const monthName = months[monthNumber - 1];
+
+        return `${monthName} ${year}`;
+      }
+      
+      $("#reporttype-m").on("click", (e) => {
+        $(".month").removeClass("d-none");
+        $(".year").addClass("d-none");
+        $(".month").datepicker({
+            format: "mm/yyyy",
+            startView: "months",
+            minViewMode: "months",
+            autoclose: true,
+            language: "es"
+          });
+          var table = new Tabulator("#table-reports", {
+            printAsHtml: true, //enable html table printing
+            // printStyled:true, //copy Tabulator styling to HTML table
+            responsiveLayout: "collapse",
+            placeholder: "No hay datos para mostrar",
+            layoutColumnsOnNewData: true,
+            layout: "fitDataFill",
+            reactiveData: true,
+            pagination: true,
+            paginationSize: 10,
+            // index: "",
+            minHeight: 500,
+            columns: [
+              { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+              { title: "No.", field: "_order_", resizable: false, formatter: "rownum" },
+              { title: "ESTUDIANTE", field: "student", width: 400, resizable: false },
+              { title: "PARTICIPACIÓN", field: "participation_note", resizable: false, titlePrint: "PT." },
+              { title: "CUADERNO", field: "notebook_note", resizable: false, titlePrint: "CU." },
+              { title: "PRÁCTICA", field: "practice", resizable: false, titlePrint: "PR." },
+              { title: "EJERCICIOS", field: "exercise", resizable: false, titlePrint: "EJ." },
+              { title: "EXPOSICIONES", field: "presentation", resizable: false, titlePrint: "EX." },
+              { title: "TRABAJO FINAL", field: "final_work", resizable: false, titlePrint: "T. F." },
+              { title: "PENALIZACIÓN", field: "penalty", resizable: false, titlePrint: "PE." },
+              { title: "CALIFICACIÓN MENSUAL ACOMULADA", field: "value", resizable: false, titlePrint: "C. M. A." }
+            ],
+            printFooter: "<h3>THANKS FOR LOOKING AT MY TABLE</h3>",
+          });
+
+
+
+          $("#genReport").unbind("click")
+          $("#genReport").on('click', async () => {
+            let date = document.querySelector(".month").value
+            let grade = document.querySelector("#grade")
+            let month = date.split("/")[0]
+            let year = date.split("/")[1]
+            let frequency = "m";
+            const request = await fetch(`/qualification/reports/?grede=${grade.value}&month=${month}&year=${year}&frequency=${frequency}`, {
+              method: "GET",
+              headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+              },
+            });
+            let data = await request
+            const fechaFormateada = dateToHuman(date);
+            let title = document.querySelector("#report-title")
+            let btnToPdf = $("#printReport")
+            if (data.status == 404) {
+
+              title.innerHTML = `No hay calificaciones en ${fechaFormateada} en ${grade.options[grade.selectedIndex].text}`
+              btnToPdf.attr('disabled', "disabled")
+              btnToPdf.addClass("btn-default")
+              btnToPdf.removeClass("btn-info")
+              table.setData([])
+              Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: 'No se encontraron calificaciones',
+                showConfirmButton: false,
+                timer: 1500
+              })
+
+            } else {
+              const text = `Reporte de calificaciones de ${fechaFormateada} en ${grade.options[grade.selectedIndex].text}`;
+              title.innerHTML = text;
+
+              data = await data.json()
+
+              table.setData(data)
+
+              // Generar pdf
+              btnToPdf.removeAttr("disabled")
+              btnToPdf.removeClass("btn-default")
+              btnToPdf.addClass("btn-info")
+
+              btnToPdf.unbind('click')
+              btnToPdf.on("click", async () => {
+
+                const document = {
+                  "head": {
+                    "teacher": "{{ request.user.username }}",
+                    "frequency": "m",
+                    "title": text,
+                  },
+                  "body": table.getData()
+                }
+                const response = await fetch("/qualification/pdf/report/", {
+                  method: "POST",
+                  headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(document)
+                })
+
+                if (response.status == 201) {
+                  const data = await response.json();
+                  window.open(data.url, '_blank')
+                }
+
+              })
+
+            }
+          })
+
+  
+      })
+
+      $("#reporttype-p").on("click", (e) => {
+  
+          $(".year").removeClass("d-none");
+          $(".month").addClass("d-none");
+
+          $(".year").datepicker({
+            format: "yyyy",
+            startView: "years",
+            minViewMode: "years",
+            autoclose: true,
+            language: "es"
+          });
+
+          const table = new Tabulator("#table-reports", {
+       
+            dataTree:true,
+            dataTreeChildIndent:40,
+            dataTreeCollapseElement:"<i class='fas fa-minus-square tree-icon'></i>", 
+            dataTreeExpandElement:"<i class='fas fa-plus-square tree-icon'></i>", 
+            responsiveLayout: "collapse",
+            placeholder: "No hay datos para mostrar",
+            layoutColumnsOnNewData: true,
+            layout: "fitDataFill",
+            reactiveData: true,
+            pagination: true,
+            paginationSize: 10,
+            // index: "",
+            minHeight: 500,
+            // width: "100%",
+            columns: [
+              { formatter: "responsiveCollapse", width: 150, minWidth: 150, hozAlign: "center", resizable: false, headerSort: false,
+              cellClick: function (e, cell) {
+                cell.getElement().querySelector(".tabulator-responsive-collapse").classList.add("responsiveCollapse-icon");
+                 },
+              },
+              { title: "No.", field: "_order_", resizable: false, formatter: "rownum" },
+              { title: "ESTUDIANTE", field: "student", width: 400, resizable: false },
+              { title: "PARTICIPACIÓN", field: "participation_note", resizable: false, titlePrint: "PT." },
+              { title: "CUADERNO", field: "notebook_note", resizable: false, titlePrint: "CU." },
+              { title: "PRÁCTICA", field: "practice", resizable: false, titlePrint: "PR." },
+              { title: "EJERCICIOS", field: "exercise", resizable: false, titlePrint: "EJ." },
+              { title: "EXPOSICIONES", field: "presentation", resizable: false, titlePrint: "EX." },
+              { title: "TRABAJO FINAL", field: "final_work", resizable: false, titlePrint: "T. F." },
+              { title: "PENALIZACIÓN", field: "penalty", resizable: false, titlePrint: "PE." },
+              // { title: "CALIFICACIÓN MENSUAL ACOMULADA", field: "value", resizable: false, titlePrint: "C. M. A." }
+              { title: "C. P. A.", field: "value", resizable: false, titlePrint: "C. P. A." }
+            ],
+          });
+
+
+
+          $("#genReport").unbind("click")
+          $("#genReport").on('click', async () => {
+            let year = document.querySelector(".year").value;
+            let grade = document.querySelector("#grade");
+            let frequency = "p";
+            const request = await fetch(`/qualification/reports/?grede=${grade.value}&year=${year}&frequency=${frequency}`, {
+              method: "GET",
+              headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+              },
+            });
+            let data = await request
+            
+            let title = document.querySelector("#report-title")
+            let btnToPdf = $("#printReport")
+            if (data.status == 404) {
+              
+              title.innerHTML = `No hay calificaciones por períodos año ${year}-${parseInt(year) + 1} en ${grade.options[grade.selectedIndex].text}`
+              btnToPdf.attr('disabled', "disabled")
+              btnToPdf.addClass("btn-default")
+              btnToPdf.removeClass("btn-info")
+              table.setData([])
+              Swal.fire({
+                position: 'center',
+                icon: 'error',
+                title: 'No se encontraron calificaciones',
+                showConfirmButton: false,
+                timer: 1500
+              })
+
+            } else {
+              const text = `Reporte de calificaciones por períodos  año ${year}-${parseInt(year) + 1} en ${grade.options[grade.selectedIndex].text}`;
+              title.innerHTML = text;
+
+              data = await data.json()
+
+              table.setData(data)
+
+              // Generar pdf
+              btnToPdf.removeAttr("disabled")
+              btnToPdf.removeClass("btn-default")
+              btnToPdf.addClass("btn-info")
+
+              btnToPdf.unbind('click')
+              btnToPdf.on("click", async () => {
+
+                const document = {
+                  "head": {
+                    "teacher": "{{ request.user.username }}",
+                    "frequency": "p",
+                    "title": text,
+                  },
+                  "body": table.getData()
+                }
+                const response = await fetch("/qualification/pdf/report/", {
+                  method: "POST",
+                  headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(document)
+                })
+
+                if (response.status == 201) {
+                  const data = await response.json();
+                  window.open(data.url, '_blank')
+                }
+
+              })
+
+            }
+          })
+
+  
+      })
+
+      $("#reporttype-p").trigger("click")
+    })
+
+  </script>
+</body>
+
+</html>
